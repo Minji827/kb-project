@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 OUT = ROOT / "outputs"
 
@@ -35,7 +35,7 @@ def log(msg: str):
 
 def check_raw():
     log("## 1. 원본 데이터 품질")
-    for name in ["portfolio.csv", "stock_prices.csv", "market_index.csv"]:
+    for name in ["portfolio.csv", "stock_prices.csv", "market/index.csv"]:
         p = DATA / name
         if not p.exists():
             log(f"- {name}: 파일 없음 (건너뜀)")
@@ -58,7 +58,7 @@ def check_raw():
 def check_calendar():
     """stock_prices 와 market_index 의 거래일 집합이 일치하는지 (JOIN 누락 방지)."""
     log("\n## 1-2. 거래일 정합 (stock_prices vs market_index)")
-    a, b = DATA / "stock_prices.csv", DATA / "market_index.csv"
+    a, b = DATA / "stock_prices.csv", DATA / "market/index.csv"
     if not a.exists() or not b.exists():
         log("- 파일 없음 → SKIP"); return
     sa = set(pd.to_datetime(pd.read_csv(a)["trade_date"]).dt.date)

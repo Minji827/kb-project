@@ -15,7 +15,7 @@
 - 계산식: 평가금액 = 보유수량 × 최신 종가, 손익률 = (평가금액 − 매입금액) / 매입금액
 - SQL 결과: `outputs/sql_A_valuation.csv`
 - Pandas 결과: `outputs/pandas_C_valuation.csv`
-- 검증: `validation_F.py` — 일치 여부 (허용 오차: )
+- 검증: `tests/integration/test_sql_vs_pandas.py` — 일치 여부 (허용 오차: )
 
 | 순위 | 종목 | 평가금액 | 손익률 |
 |---|---|---|---|
@@ -62,7 +62,11 @@
 - (예) 배당·수수료는 데이터에 없어 손익에 미반영
 - (예) 지수 API 발급 불가로 stock_prices 평균 기반 가상 지수(SYNTH_KOSPI)를 사용함 — 실제 시장과 다름
 
-## 6. 결론 3줄
+## 6. AI 브리핑 (`python -m backend.services.ai.briefing` 출력을 붙이고, 수치가 위 표와 일치하는지 확인)
+
+> 
+
+## 7. 결론 3줄
 
 1.
 2.

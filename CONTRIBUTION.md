@@ -14,7 +14,7 @@
 ## 1. (이름) — SQL 보유/평가
 
 - 브랜치: `<본인 github id>` (예: `joonhwanko`)
-- 작업 파일: `sql/queries_A.sql`, `outputs/sql_A_valuation.csv`
+- 작업 파일: `sql/portfolio.sql`, `outputs/sql_A_valuation.csv`
 - 주요 커밋:
   - `[이름] data: ...` (#해시)
   - `[이름] feat: ...` (#해시)
@@ -50,7 +50,7 @@
 - 리뷰한 PR:
 - 60초 설명:
 
-## 5. (이름) — 지수 확보·분석 (C)
+## 5. (이름) — 지표 수집·분석 (C)
 
 - 브랜치:
 - 작업 파일:
@@ -68,7 +68,7 @@
 - 리뷰한 PR:
 - 60초 설명:
 
-## 7. (이름) — 통합 + AI 로그 + 결과 리포트 + n8n
+## 7. (이름) — 리드: 요구사항·DB/API 설계·Git 관리·통합 + AI 브리핑
 
 - 브랜치:
 - 작업 파일:

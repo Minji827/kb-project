@@ -6,9 +6,9 @@ SQL 파일 안에서 내보낼 쿼리 바로 위에 아래 주석을 붙인다:
     -- @export: sql_A_valuation.csv
 
 실행:
-    python validation/load_to_sqlite.py            # 먼저 1회
-    python validation/run_sql.py sql/queries_A.sql
-    python validation/run_sql.py sql/queries_B.sql
+    python backend/utils/load_to_sqlite.py            # 먼저 1회
+    python backend/utils/run_sql.py sql/portfolio.sql
+    python backend/utils/run_sql.py sql/market.sql
 """
 import re
 import sqlite3
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / "data" / "portfolio.db"
 OUT = ROOT / "outputs"
 
@@ -51,5 +51,5 @@ def main(path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        sys.exit("usage: python validation/run_sql.py sql/queries_A.sql")
+        sys.exit("usage: python backend/utils/run_sql.py sql/portfolio.sql")
     main(sys.argv[1])

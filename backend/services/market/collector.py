@@ -3,7 +3,7 @@ fetch_index.py — 시장지수(market_index.csv) 확보. 담당: 5번
 1) 금융위원회 '지수시세정보' API 시도 (data.go.kr 키 필요, 환경변수 DATA_GO_KR_KEY)
 2) 실패 시 stock_prices.csv 전 종목 평균으로 '가상 시장지수' 생성 (SYNTH_KOSPI)
 
-실행: python data/fetch_index.py            # data/market_index.csv 생성
+실행: python -m backend.services.market.collector            # data/market_index.csv 생성
 컬럼: trade_date, index_name, close_value
 """
 import os
@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 import pandas as pd
 
-DATA = Path(__file__).resolve().parent
-OUT = DATA / "market_index.csv"
+DATA = Path(__file__).resolve().parents[3] / "data"
+OUT = DATA / "market" / "index.csv"
 
 
 def from_api(start: str, end: str) -> pd.DataFrame | None:
