@@ -4,18 +4,29 @@
 
 ## 1. DB 스키마 (SQLite `data/portfolio.db`, Oracle 동일 구조)
 
-`backend/utils/load_to_sqlite.py`가 `data/*.csv`를 아래 테이블로 적재한다. 컬럼명은 CSV 헤더를 소문자로 정규화한 값이며, 강사 CSV 헤더가 다르면 이 문서 기준으로 코드 쪽을 맞춘다.
+`backend/utils/load_to_sqlite.py`가 `data/raw/*.csv`, `data/market/*.csv`를 아래 테이블로 적재한다. 원본 컬럼은 `backend/utils/columns.py`에서 표준명으로 매핑한다 (모든 로더 공통).
+
+| 원본 파일 | 원본 컬럼 | 표준 컬럼 |
+|---|---|---|
+| 06_portfolio.csv | portfolio_id, stock_id, stock_name, buy_price, quantity | position_id, ticker, name, buy_price, quantity |
+| 06_stock_prices.csv | date, stock_id, price, volume | trade_date, ticker, close_price, volume |
+| market/index.csv | (생성) | trade_date, index_name, close_value |
+
+원본 파일 앞에 BOM(`\ufeff`)이 있으므로 `encoding="utf-8-sig"`로 읽는다.
 
 ```
-portfolio                  보유종목 (F 입력)
-├─ ticker        TEXT  PK   종목코드
-├─ quantity      REAL       보유수량
-└─ buy_price     REAL       매입단가
+portfolio                  보유 포지션 (F 입력) — 종목당 여러 행! 종목별 분석은 GROUP BY ticker
+├─ position_id   TEXT  PK   PF06_0001 …
+├─ ticker        TEXT       S06_001 … (30종목, 종목당 10포지션)
+├─ name          TEXT       SYNTH_STOCK_01 …
+├─ buy_price     REAL       매입단가 (포지션별)
+└─ quantity      INT        수량 (포지션별)
 
 stock_prices               일자별 종가 (F 입력)
-├─ trade_date    DATE  PK₁  거래일 (YYYY-MM-DD)
+├─ trade_date    DATE  PK₁  거래일 (YYYY-MM-DD), 252일
 ├─ ticker        TEXT  PK₂  → portfolio.ticker
-└─ close_price   REAL       종가
+├─ close_price   REAL       종가
+└─ volume        INT        거래량
 
 market_index               시장지수 (C 입력)  ← data/market/index.csv
 ├─ trade_date    DATE  PK₁
@@ -28,14 +39,16 @@ market_gold / market_carbon   (선택)  ← data/market/gold.csv, carbon.csv
 └─ close_value   REAL
 ```
 
-관계: `stock_prices.ticker → portfolio.ticker` (N:1). 시장 테이블은 `trade_date`로만 F 결과와 JOIN한다.
+관계: `portfolio.ticker → stock_prices.ticker` (N:N — 포지션 여러 개 × 거래일 여러 개). **시세와 JOIN하기 전에 포지션을 종목별로 SUM한 서브쿼리(`holdings`)를 만든다.** 그냥 JOIN하면 종목별 행이 포지션 수만큼 중복돼 총액이 부풀거나 검증 키가 겹친다. 시장 테이블은 `trade_date`로만 F 결과와 JOIN한다.
 
 ### 파생 뷰 (SQL 파일 안의 CTE로 구현, 실제 뷰는 만들지 않음)
 
 | 이름 | 정의 | 원천 SQL |
 |---|---|---|
-| `latest_price` | ticker별 MAX(trade_date)의 close_price | `sql/portfolio.sql` [A-1] |
-| `valuation` | quantity×close_price, 손익, 손익률, 비중 | [A-2]~[A-4] |
+| `holdings` | ticker별 SUM(quantity), SUM(quantity×buy_price), 가중평균 buy_price | `sql/portfolio.sql` [A-1] |
+| `latest_price` | ticker별 MAX(trade_date)의 close_price | [A-1] |
+| `valuation` | holdings ⨝ latest_price → 평가금액, 손익, 손익률(=pnl/cost_amount), 비중 | [A-2]~[A-3] |
+| `positions` | 포지션 단위 손익 (best/worst 5) | [A-4] |
 | `daily_total` | trade_date별 SUM(quantity×close_price) | `sql/market.sql` [B-1] |
 | `vs_index` | daily_total ⨝ market_index, 변화율·초과수익률 | [B-6] |
 
@@ -55,9 +68,10 @@ market_gold / market_carbon   (선택)  ← data/market/gold.csv, carbon.csv
 
 ```python
 # backend/services/portfolio/calculator.py
-load_data(root) -> (portfolio: DataFrame, prices: DataFrame)
-valuation(portfolio, prices) -> DataFrame   # ticker, quantity, buy_price, close_price,
-                                            # cost_amount, eval_amount, pnl, pnl_pct, weight_pct
+load_data(root) -> (portfolio: DataFrame, prices: DataFrame)   # 표준 컬럼으로 매핑됨
+holdings(portfolio) -> DataFrame            # ticker, name, positions, quantity, cost_amount, buy_price(가중평균)
+valuation(portfolio, prices) -> DataFrame   # holdings + close_price, eval_amount, pnl, pnl_pct, weight_pct
+position_pnl(portfolio, prices) -> DataFrame # 포지션 단위 pnl, pnl_pct
 top_bottom(val, n=3) -> DataFrame           # + rank ('top'|'bottom')
 daily_total(portfolio, prices) -> DataFrame # trade_date, total_eval, diff_amt, diff_pct
 

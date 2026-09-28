@@ -12,9 +12,13 @@
 
 ## 1. 문제 정의
 
-- 데이터: `data/portfolio.csv`, `data/stock_prices.csv` (강사 제공), `data/market/index.csv` (금융위 API 또는 `collector.py` 대체 생성), 선택 `gold.csv`·`carbon.csv`
+- 데이터 (강사 제공 synthetic, `data/raw/`):
+  - `06_portfolio.csv` — 300 포지션(portfolio_id, stock_id, stock_name, buy_price, quantity). **같은 종목을 여러 번 매수한 구조**라 종목별 분석은 포지션을 SUM해서 집계한다 (가중평균 매입가 = 총매입금액/총수량)
+  - `06_stock_prices.csv` — 30종목 × 252거래일(2025-01-02~12-19), date, stock_id, price, volume
+  - `data/market/index.csv` — 시장지수. 강사 지수 데이터가 없어 `collector.py`가 30종목 평균(첫날=1000)으로 생성한 SYNTH_KOSPI. 금융위 API 키가 있으면 `--force`로 교체
+  - 원본 컬럼은 로드 시 표준명(`trade_date, ticker, close_price, name, position_id`)으로 매핑한다 → `backend/utils/columns.py`, `docs/api.md` §1
 - 분석 질문
-  1. 종목별 평가금액·손익률은 얼마이며, 상위/하위 3개는? (F)
+  1. 종목별 평가금액·손익률은 얼마이며, 상위/하위 3개는? 포지션 단위로 가장 잘/못 산 매수 건은? (F)
   2. 포트폴리오와 시장지수의 일간 변화율을 비교했을 때 초과수익이 가장 컸던/부진했던 구간은? (F+C)
   3. 지수 급변일에 포트폴리오는 같은 방향으로 움직였는가, 어느 종목이 차이를 만들었는가? (F+C)
 - 핵심 원칙: 같은 질문을 SQL과 Pandas로 각각 풀고, `outputs/`로 내보내 `tests/integration`이 비교한다.
@@ -38,7 +42,7 @@
 ```bash
 pip install -r requirements.txt
 
-python -m backend.services.market.collector        # 1) data/market/index.csv (API 실패 시 가상 지수)
+python -m backend.services.market.collector        # 1) data/market/index.csv 생성 (API 키 없으면 30종목 평균 지수)
 python backend/utils/load_to_sqlite.py             # 2) data/*.csv → data/portfolio.db
 python backend/utils/run_sql.py sql/portfolio.sql  # 3) SQL 실행 → outputs/sql_A_*.csv
 python backend/utils/run_sql.py sql/market.sql     #    → outputs/sql_B_*.csv

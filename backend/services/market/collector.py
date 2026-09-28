@@ -1,7 +1,7 @@
 """
 fetch_index.py — 시장지수(market_index.csv) 확보. 담당: 5번
 1) 금융위원회 '지수시세정보' API 시도 (data.go.kr 키 필요, 환경변수 DATA_GO_KR_KEY)
-2) 실패 시 stock_prices.csv 전 종목 평균으로 '가상 시장지수' 생성 (SYNTH_KOSPI)
+2) 실패 시 stock_prices 전 종목 평균(첫날=1000)으로 '가상 시장지수' 생성 (SYNTH_KOSPI)
 
 실행: python -m backend.services.market.collector            # data/market_index.csv 생성
 컬럼: trade_date, index_name, close_value
@@ -51,9 +51,12 @@ def synthetic(sp: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
-    sp = pd.read_csv(DATA / "stock_prices.csv")
-    sp.columns = sp.columns.str.strip().str.lower()
-    sp["trade_date"] = pd.to_datetime(sp["trade_date"]).dt.date
+    if OUT.exists() and "--force" not in sys.argv:
+        print(f"{OUT.relative_to(DATA.parent)} 이미 있음 (make_synthetic 또는 이전 수집). 다시 만들려면 --force"); return
+    sys.path.insert(0, str(DATA.parent))
+    from backend.utils.columns import read_csv
+    sp = read_csv(DATA / "raw" / "06_stock_prices.csv")
+    sp["trade_date"] = sp["trade_date"].dt.date
     start, end = min(sp["trade_date"]).strftime("%Y%m%d"), max(sp["trade_date"]).strftime("%Y%m%d")
     df = from_api(start, end)
     if df is None:
