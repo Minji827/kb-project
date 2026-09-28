@@ -14,6 +14,14 @@
 
 원본 파일 앞에 BOM(`\ufeff`)이 있으므로 `encoding="utf-8-sig"`로 읽는다.
 
+### 데이터 폴더 규칙
+| 폴더 | 내용 | 규칙 |
+|---|---|---|
+| `data/raw/` | 강사 원본 | **수정 금지** |
+| `data/processed/` | 2번이 만든 전처리 결과 (`<내용>_<이름>.csv`) | 만든 스크립트를 같은 PR에 포함. 다른 사람 코드의 입력이 되는 파일만 |
+| `data/market/` | 4번이 수집·생성한 지표 | `trade_date, index_name, close_value` |
+| `outputs/` | 분석 결과·검증 리포트 | 아래 결과 파일 계약을 따름 |
+
 ```
 portfolio                  보유 포지션 (F 입력) — 종목당 여러 행! 종목별 분석은 GROUP BY ticker
 ├─ position_id   TEXT  PK   PF06_0001 …
@@ -56,9 +64,9 @@ market_gold / market_carbon   (선택)  ← data/market/gold.csv, carbon.csv
 
 | 파일 | 키 | 비교 컬럼 | 생성 |
 |---|---|---|---|
-| `sql_A_valuation.csv` / `pandas_C_valuation.csv` | ticker | eval_amount, pnl_pct | SQL 1 / Pandas 3 |
-| `sql_B_daily_total.csv` / `pandas_D_daily_total.csv` | trade_date | total_eval | SQL 2 / Pandas 4 |
-| `sql_B_vs_index.csv` / `pandas_D_vs_index.csv` | trade_date | port_pct, index_pct, excess_pct | SQL 2 / Pandas 4 |
+| `sql_A_valuation.csv` / `pandas_C_valuation.csv` | ticker | eval_amount, pnl_pct | 3 (SQL·Pandas 모두) |
+| `sql_B_daily_total.csv` / `pandas_D_daily_total.csv` | trade_date | total_eval | 5 (SQL·Pandas 모두) |
+| `sql_B_vs_index.csv` / `pandas_D_vs_index.csv` | trade_date | port_pct, index_pct, excess_pct | 5 (SQL·Pandas 모두) |
 
 **같은 키·같은 컬럼명**을 지켜야 `tests/integration/test_sql_vs_pandas.py`가 자동으로 비교한다. 컬럼을 추가하는 건 자유, 이름을 바꾸면 리드에게 먼저 알린다.
 
